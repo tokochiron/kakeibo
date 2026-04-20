@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>家計簿</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#e2e0da;--border2:#cccac3;
+  --text:#1a1916;--text2:#6b6860;--text3:#a09e99;
+  --green-bg:#e8f5ee;--green-bd:#7ec8a0;--green-tx:#1a6640;
+  --blue-bg:#e8f0fb;--blue-bd:#7aaae8;--blue-tx:#1a4080;
+  --amber-bg:#fdf3e0;--amber-bd:#e8b84b;--amber-tx:#7a4f0a;
+  --red:#c0392b;--r:14px;--rs:8px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#141412;--surface:#1e1d1a;--border:#2e2d29;--border2:#3e3d38;
+  --text:#f0ede8;--text2:#918e87;--text3:#5a5852;
+  --green-bg:#0d2e1a;--green-bd:#2a6644;--green-tx:#6dcf98;
+  --blue-bg:#0d1e33;--blue-bd:#2a4a80;--blue-tx:#7aaae8;
+  --amber-bg:#2a1e08;--amber-bd:#7a5010;--amber-tx:#e8b84b;
+}}
+body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:3rem;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:.75rem 1rem;position:sticky;top:0;z-index:10;}
+.hrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;}
+h1{font-size:17px;font-weight:600;}
+.tab-row{display:flex;gap:4px;}
+.tab{flex:1;padding:7px 0;border:1px solid var(--border);border-radius:var(--rs);background:transparent;font-size:13px;font-family:inherit;color:var(--text2);cursor:pointer;}
+.tab.on{background:var(--surface);border-color:var(--border2);color:var(--text);font-weight:600;}
+.month-nav{display:flex;align-items:center;gap:6px;margin-top:.4rem;}
+.month-nav button{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:4px 12px;cursor:pointer;color:var(--text);font-size:15px;font-family:inherit;}
+#mtitle{font-size:15px;font-weight:600;min-width:80px;text-align:center;}
+.main{padding:.75rem 1rem;max-width:480px;margin:0 auto;}
+.pg{display:none;}.pg.on{display:block;}
+.sec{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.06em;margin:1.25rem 0 .4rem 2px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:.5rem;}
+.row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:6px;}
+.row:last-child{border-bottom:none;}
+.lbl{font-size:14px;color:var(--text2);flex:1;}
+.row input[type=number]{width:120px;text-align:right;font-size:16px;font-family:inherit;color:var(--text);background:transparent;border:none;outline:none;padding:2px 0;-moz-appearance:textfield;}
+.row input[type=number]::-webkit-outer-spin-button,.row input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+.row input::placeholder{color:var(--text3);}
+.unit{font-size:13px;color:var(--text3);min-width:14px;}
+.def-badge{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--amber-bg);color:var(--amber-tx);border:1px solid var(--amber-bd);white-space:nowrap;}
+.itotal{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--green-bg);border-top:1px solid var(--green-bd);}
+.itotal-l{font-size:13px;font-weight:600;color:var(--green-tx);}
+.itotal-v{font-size:18px;font-weight:700;color:var(--green-tx);}
+.fgroup{display:flex;flex-direction:column;gap:8px;margin-bottom:.5rem;}
+.fc{border-radius:var(--r);padding:12px 14px;border:1px solid;}
+.fc.nanto{background:var(--green-bg);border-color:var(--green-bd);}
+.fc.aeon{background:var(--blue-bg);border-color:var(--blue-bd);}
+.fc.sbi{background:var(--amber-bg);border-color:var(--amber-bd);}
+.fh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.fn{font-size:12px;font-weight:600;}
+.fc.nanto .fn{color:var(--green-tx);}.fc.aeon .fn{color:var(--blue-tx);}.fc.sbi .fn{color:var(--amber-tx);}
+.fa{font-size:22px;font-weight:700;}
+.fc.nanto .fa{color:var(--green-tx);}.fc.aeon .fa{color:var(--blue-tx);}.fc.sbi .fa{color:var(--amber-tx);}
+.fd{font-size:12px;line-height:1.6;}
+.fc.nanto .fd{color:var(--green-tx);opacity:.8;}.fc.aeon .fd{color:var(--blue-tx);opacity:.8;}.fc.sbi .fd{color:var(--amber-tx);opacity:.8;}
+.summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:.5rem;}
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px;}
+.sl{font-size:11px;color:var(--text3);margin-bottom:3px;}
+.sv{font-size:18px;font-weight:700;}
+.sv.g{color:#1a7a4a;}.sv.r{color:var(--red);}
+.sdiv{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.sbal{display:flex;justify-content:space-between;align-items:baseline;}
+.sbal-l{font-size:13px;color:var(--text2);}
+.sbal-v{font-size:22px;font-weight:700;}
+.btn{width:100%;padding:13px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface);font-size:15px;font-weight:600;cursor:pointer;color:var(--text);font-family:inherit;margin-top:1rem;}
+.btn:active{background:var(--bg);}
+.btn.sub{margin-top:.5rem;font-size:14px;font-weight:500;color:var(--text2);}
+.ok{display:none;text-align:center;font-size:13px;color:#1a7a4a;margin-top:8px;font-weight:500;}
+.def-note{font-size:12px;color:var(--text3);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--rs);padding:8px 12px;margin-bottom:.75rem;line-height:1.6;}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow"><h1>家計簿</h1></div>
+  <div class="tab-row">
+    <button class="tab on" onclick="showPg('input')">入力</button>
+    <button class="tab" onclick="showPg('default')">デフォルト設定</button>
+  </div>
+  <div class="month-nav" id="mnav">
+    <button onclick="chg(-1)">＜</button>
+    <span id="mtitle"></span>
+    <button onclick="chg(1)">＞</button>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- 入力ページ -->
+<div id="pg-input" class="pg on">
+  <div class="sec">収入</div>
+  <div class="card">
+    <div class="row"><span class="lbl">妻の収入</span><input type="number" id="income_wife" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">夫の収入</span><input type="number" id="income_husband" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">その他収入</span><input type="number" id="income_other" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="itotal"><span class="itotal-l">収入合計</span><span class="itotal-v" id="income-total">¥0</span></div>
+  </div>
+
+  <div class="sec">支出 — 南都銀行引き落とし</div>
+  <div class="card">
+    <div class="row"><span class="lbl">保育料</span><input type="number" id="hoiku" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">コープ</span><input type="number" id="coop" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">支出 — イオン銀行引き落とし</div>
+  <div class="card">
+    <div class="row"><span class="lbl">楽天カード</span><input type="number" id="rakuten" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">イオンカード</span><input type="number" id="aeon" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">管理費</span><input type="number" id="kanri" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">ローン</span><input type="number" id="loan" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">おおみや保育園</span><input type="number" id="omiya" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">積立 — SBI目的別口座</div>
+  <div class="card">
+    <div class="row"><span class="lbl">現金保持用</span><input type="number" id="cash" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">保険用</span><input type="number" id="hoken" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">投資用</span><input type="number" id="invest" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">特別費</span><input type="number" id="special" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">お小遣い</div>
+  <div class="card">
+    <div class="row"><span class="lbl">くう</span><input type="number" id="kuu" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">あか</span><input type="number" id="aka" min="0" placeholder="0" oninput="calc()"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">振替額（自動計算）</div>
+  <div class="fgroup">
+    <div class="fc nanto">
+      <div class="fh"><span class="fn">南都銀行へ振替</span><span class="fa" id="f-nanto">¥0</span></div>
+      <div class="fd" id="d-nanto">保育料 + コープ</div>
+    </div>
+    <div class="fc aeon">
+      <div class="fh"><span class="fn">イオン銀行へ振替</span><span class="fa" id="f-aeon">¥0</span></div>
+      <div class="fd" id="d-aeon">楽天 + イオンカード + 管理費 + ローン</div>
+    </div>
+    <div class="fc sbi">
+      <div class="fh"><span class="fn">SBIへ積立</span><span class="fa" id="f-sbi">¥0</span></div>
+      <div class="fd" id="d-sbi">現金保持用 + 保険 + 投資 + 特別費</div>
+    </div>
+  </div>
+
+  <div class="sec">月次収支</div>
+  <div class="summary">
+    <div class="sgrid">
+      <div><div class="sl">収入合計</div><div class="sv g" id="r-inc">¥0</div></div>
+      <div><div class="sl">支出合計</div><div class="sv r" id="r-out">¥0</div></div>
+    </div>
+    <hr class="sdiv">
+    <div class="sbal"><span class="sbal-l">収支（残り）</span><span class="sbal-v" id="r-bal">¥0</span></div>
+  </div>
+
+  <button class="btn" onclick="save()">この月のデータを保存</button>
+  <button class="btn sub" onclick="resetToDefault()">デフォルト値に戻す</button>
+  <div class="ok" id="ok-input">保存しました！</div>
+</div>
+
+<!-- デフォルト設定ページ -->
+<div id="pg-default" class="pg">
+  <div class="def-note">ここで設定した値が毎月の初期値になります。毎月変わらない固定費を登録しておくと便利です。</div>
+
+  <div class="sec">収入</div>
+  <div class="card">
+    <div class="row"><span class="lbl">妻の収入</span><input type="number" id="d_income_wife" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">夫の収入</span><input type="number" id="d_income_husband" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">その他収入</span><input type="number" id="d_income_other" min="0" placeholder="0"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">支出 — 南都銀行引き落とし</div>
+  <div class="card">
+    <div class="row"><span class="lbl">保育料</span><input type="number" id="d_hoiku" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">コープ</span><input type="number" id="d_coop" min="0" placeholder="0"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">支出 — イオン銀行引き落とし</div>
+  <div class="card">
+    <div class="row"><span class="lbl">楽天カード</span><input type="number" id="d_rakuten" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">イオンカード</span><input type="number" id="d_aeon" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">管理費</span><input type="number" id="d_kanri" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">ローン</span><input type="number" id="d_loan" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">おおみや保育園</span><input type="number" id="d_omiya" min="0" placeholder="0"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">積立 — SBI目的別口座</div>
+  <div class="card">
+    <div class="row"><span class="lbl">現金保持用</span><input type="number" id="d_cash" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">保険用</span><input type="number" id="d_hoken" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">投資用</span><input type="number" id="d_invest" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">特別費</span><input type="number" id="d_special" min="0" placeholder="0"><span class="unit">円</span></div>
+  </div>
+
+  <div class="sec">お小遣い</div>
+  <div class="card">
+    <div class="row"><span class="lbl">くう</span><input type="number" id="d_kuu" min="0" placeholder="0"><span class="unit">円</span></div>
+    <div class="row"><span class="lbl">あか</span><input type="number" id="d_aka" min="0" placeholder="0"><span class="unit">円</span></div>
+  </div>
+
+  <button class="btn" onclick="saveDefault()">デフォルト値を保存</button>
+  <div class="ok" id="ok-default">デフォルト値を保存しました！</div>
+</div>
+
+</div>
+
+<script>
+const IDS = ['income_wife','income_husband','income_other','hoiku','coop','rakuten','aeon','kanri','loan','cash','hoken','invest','special','kuu','aka','omiya'];
+
+let cur = (() => {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+})();
+
+function fmt(n){ return '¥' + Math.round(n).toLocaleString('ja-JP'); }
+function v(id){ return parseFloat(document.getElementById(id).value) || 0; }
+
+function getDefaults(){
+  try{ return JSON.parse(localStorage.getItem('kb_defaults') || '{}'); }catch(e){ return {}; }
+}
+
+function showPg(name){
+  document.querySelectorAll('.pg').forEach(el => el.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('on'));
+  document.getElementById('pg-' + name).classList.add('on');
+  document.querySelectorAll('.tab')[name === 'input' ? 0 : 1].classList.add('on');
+  document.getElementById('mnav').style.display = name === 'input' ? 'flex' : 'none';
+  if(name === 'default') loadDefaultForm();
+}
+
+function calc(){
+  const income = v('income_wife') + v('income_husband') + v('income_other');
+  const nanto = v('hoiku') + v('coop');
+  const aeonB = v('rakuten') + v('aeon') + v('kanri') + v('loan') + v('omiya');
+  const sbi = v('cash') + v('hoken') + v('invest') + v('special');
+  const kodukai = v('kuu') + v('aka');
+  const total = nanto + aeonB + sbi + kodukai;
+  const balance = income - total;
+
+  document.getElementById('income-total').textContent = fmt(income);
+  document.getElementById('f-nanto').textContent = fmt(nanto);
+  document.getElementById('d-nanto').textContent = '保育料 ' + fmt(v('hoiku')) + '　+　コープ ' + fmt(v('coop'));
+  document.getElementById('f-aeon').textContent = fmt(aeonB);
+  document.getElementById('d-aeon').textContent = '楽天 ' + fmt(v('rakuten')) + '　+　イオン ' + fmt(v('aeon')) + '　+　管理費 ' + fmt(v('kanri')) + '　+　ローン ' + fmt(v('loan')) + '　+　おおみや ' + fmt(v('omiya'));
+  document.getElementById('f-sbi').textContent = fmt(sbi);
+  document.getElementById('d-sbi').textContent = '現金 ' + fmt(v('cash')) + '　+　保険 ' + fmt(v('hoken')) + '　+　投資 ' + fmt(v('invest')) + '　+　特別費 ' + fmt(v('special'));
+  document.getElementById('r-inc').textContent = fmt(income);
+  document.getElementById('r-out').textContent = fmt(total);
+  const balEl = document.getElementById('r-bal');
+  balEl.textContent = (balance >= 0 ? '+' : '') + fmt(balance);
+  balEl.className = 'sbal-v ' + (balance >= 0 ? 'g' : 'r');
+  // g/r on sbal-v needs inline color
+  balEl.style.color = balance >= 0 ? '#1a7a4a' : 'var(--red)';
+}
+
+function resetToDefault(){
+  const def = getDefaults();
+  IDS.forEach(id => { document.getElementById(id).value = def[id] || ''; });
+  calc();
+}
+
+function chg(d){
+  const [y, m] = cur.split('-').map(Number);
+  const nd = new Date(y, m - 1 + d, 1);
+  cur = nd.getFullYear() + '-' + String(nd.getMonth()+1).padStart(2,'0');
+  document.getElementById('mtitle').textContent = getLabel();
+  load();
+}
+
+function getLabel(){
+  const [y, m] = cur.split('-');
+  return y + '年' + parseInt(m) + '月';
+}
+
+function flash(id){
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
+
+var _store = {};
+function storeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return _store[k]||null; } }
+function storeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ _store[k]=v; } }
+
+function save(){
+  const d = {};
+  IDS.forEach(id => { d[id] = document.getElementById(id).value; });
+  storeSet('kb_' + cur, JSON.stringify(d));
+  flash('ok-input');
+}
+function load(){
+  try{
+    const saved = storeGet('kb_' + cur);
+    if(saved){
+      const d = JSON.parse(saved);
+      IDS.forEach(id => { document.getElementById(id).value = d[id] || ''; });
+    } else {
+      const raw = storeGet('kb_defaults');
+      const def = raw ? JSON.parse(raw) : {};
+      IDS.forEach(id => { document.getElementById(id).value = def[id] || ''; });
+    }
+  }catch(e){
+    IDS.forEach(id => { document.getElementById(id).value = ''; });
+  }
+  calc();
+}
+function saveDefault(){
+  const d = {};
+  IDS.forEach(id => { d[id] = document.getElementById('d_' + id).value; });
+  storeSet('kb_defaults', JSON.stringify(d));
+  flash('ok-default');
+}
+function loadDefaultForm(){
+  try{
+    const raw = storeGet('kb_defaults');
+    const def = raw ? JSON.parse(raw) : {};
+    IDS.forEach(id => { document.getElementById('d_' + id).value = def[id] || ''; });
+  }catch(e){}
+}
+function getDefaults(){
+  try{ const r = storeGet('kb_defaults'); return r ? JSON.parse(r) : {}; }catch(e){ return {}; }
+}
+
+document.getElementById('mtitle').textContent = getLabel();
+load();
+</script>
+</body>
+</html>
